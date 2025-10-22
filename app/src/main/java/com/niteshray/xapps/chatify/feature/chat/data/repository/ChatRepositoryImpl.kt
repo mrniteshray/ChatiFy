@@ -10,8 +10,19 @@ import kotlinx.coroutines.tasks.await
 
 class ChatRepositoryImpl : ChatRepository {
 
+    /**
+     * REALTIME DATABASE: Perfect for chat messages
+     * Reasons:
+     * 1. Real-time synchronization (messages appear instantly)
+     * 2. Efficient ordering by timestamp
+     * 3. Low latency for live updates
+     * 4. Better for frequent small updates (typing indicators, read receipts)
+     */
     private val database = FirebaseDatabase.getInstance().reference
 
+    /**
+     * REALTIME DB: Send message with real-time sync
+     */
     override suspend fun sendMessage(message: Message): Result<Unit> {
         return try {
             val messageId = database.child("chats")
@@ -59,6 +70,10 @@ class ChatRepositoryImpl : ChatRepository {
         }
     }
 
+    /**
+     * REALTIME DB: Listen to messages with real-time updates
+     * ValueEventListener provides instant sync when new messages arrive
+     */
     override suspend fun getMessages(chatId: String): Flow<Result<List<Message>>> = callbackFlow {
         try {
             val messagesRef = database.child("chats").child(chatId).child("messages")
@@ -102,6 +117,10 @@ class ChatRepositoryImpl : ChatRepository {
         }
     }
 
+    /**
+     * REALTIME DB: Mark message as read
+     * Instant update for read receipts
+     */
     override suspend fun markMessageAsRead(messageId: String, chatId: String): Result<Unit> {
         return try {
             database.child("chats")
@@ -118,7 +137,11 @@ class ChatRepositoryImpl : ChatRepository {
         }
     }
 
-    override fun getChatId(userId1: String, userId2: String): String {
+    /**
+     * REALTIME DB: Generate unique chat ID
+     * Based on user IDs to ensure consistency
+     */
+    override fun generateChatId(userId1: String, userId2: String): String {
         // Create a consistent chat ID by sorting user IDs
         return if (userId1 < userId2) {
             "${userId1}_${userId2}"

@@ -1,38 +1,58 @@
 package com.niteshray.xapps.chatify.feature.home.data.repository
 
 import com.google.firebase.database.*
+import com.google.firebase.firestore.FirebaseFirestore
 import com.niteshray.xapps.chatify.feature.auth.domain.model.User
 import com.niteshray.xapps.chatify.feature.home.domain.repository.HomeRepository
 import kotlinx.coroutines.tasks.await
 
 class HomeRepositoryImpl : HomeRepository {
 
-    private val database = FirebaseDatabase.getInstance().reference
+    // Realtime Database - For presence/online status (real-time updates)
+    private val realtimeDb = FirebaseDatabase.getInstance().reference
+    
+    // Firestore - For user profiles (complex queries, structured data)
+    private val firestore = FirebaseFirestore.getInstance()
 
+    /**
+     * FIRESTORE: Get all users (better for complex queries, pagination, filtering)
+     * REALTIME DB: Get presence data (real-time online/offline status)
+     */
     override suspend fun getAllUsers(currentUserId: String): Result<List<User>> {
         return try {
-            val snapshot = database.child("users").get().await()
+            // FIRESTORE: Query user profiles
+            val snapshot = firestore.collection("users")
+                .get()
+                .await()
             
-            println("DEBUG: Total users in database: ${snapshot.childrenCount}")
+            println("DEBUG: Total users in Firestore: ${snapshot.size()}")
 
             val allUsers = mutableListOf<User>()
-            snapshot.children.forEach { doc ->
-                val uid = doc.child("uid").getValue(String::class.java) ?: ""
-                val name = doc.child("name").getValue(String::class.java) ?: ""
-                val email = doc.child("email").getValue(String::class.java) ?: ""
+            
+            // Get user profiles from Firestore
+            snapshot.documents.forEach { doc ->
+                val uid = doc.getString("uid") ?: ""
+                val name = doc.getString("name") ?: ""
+                val email = doc.getString("email") ?: ""
                 
                 println("DEBUG: User found - UID: $uid, Name: '$name', Email: $email")
                 
                 // Exclude current user
                 if (uid != currentUserId && name.isNotEmpty()) {
+                    // Get presence data from Realtime DB
+                    val presenceSnapshot = realtimeDb.child("presence")
+                        .child(uid)
+                        .get()
+                        .await()
+                    
                     val user = User(
                         uid = uid,
                         name = name,
                         email = email,
-                        profilePictureUrl = doc.child("profilePictureUrl").getValue(String::class.java) ?: "",
-                        isOnline = doc.child("isOnline").getValue(Boolean::class.java) ?: false,
-                        lastSeen = doc.child("lastSeen").getValue(Long::class.java) ?: 0L,
-                        friends = doc.child("friends").children.mapNotNull { it.getValue(String::class.java) }
+                        profilePictureUrl = doc.getString("profilePictureUrl") ?: "",
+                        isOnline = presenceSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false,
+                        lastSeen = presenceSnapshot.child("lastSeen").getValue(Long::class.java) ?: 0L,
+                        friends = (doc.get("friends") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
                     )
                     allUsers.add(user)
                 }
@@ -47,17 +67,32 @@ class HomeRepositoryImpl : HomeRepository {
         }
     }
 
+    /**
+     * FIRESTORE: Get user profile data
+     * REALTIME DB: Get presence data
+     */
     override suspend fun getCurrentUserData(userId: String): Result<User> {
         return try {
-            val snapshot = database.child("users").child(userId).get().await()
+            // FIRESTORE: Get user profile
+            val userDoc = firestore.collection("users")
+                .document(userId)
+                .get()
+                .await()
+            
+            // REALTIME DB: Get presence data
+            val presenceSnapshot = realtimeDb.child("presence")
+                .child(userId)
+                .get()
+                .await()
+            
             val user = User(
-                uid = snapshot.child("uid").getValue(String::class.java) ?: "",
-                name = snapshot.child("name").getValue(String::class.java) ?: "",
-                email = snapshot.child("email").getValue(String::class.java) ?: "",
-                profilePictureUrl = snapshot.child("profilePictureUrl").getValue(String::class.java) ?: "",
-                isOnline = snapshot.child("isOnline").getValue(Boolean::class.java) ?: false,
-                lastSeen = snapshot.child("lastSeen").getValue(Long::class.java) ?: 0L,
-                friends = snapshot.child("friends").children.mapNotNull { it.getValue(String::class.java) }
+                uid = userDoc.getString("uid") ?: "",
+                name = userDoc.getString("name") ?: "",
+                email = userDoc.getString("email") ?: "",
+                profilePictureUrl = userDoc.getString("profilePictureUrl") ?: "",
+                isOnline = presenceSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false,
+                lastSeen = presenceSnapshot.child("lastSeen").getValue(Long::class.java) ?: 0L,
+                friends = (userDoc.get("friends") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
             )
             Result.success(user)
         } catch (e: Exception) {
