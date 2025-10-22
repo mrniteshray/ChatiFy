@@ -53,7 +53,9 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         binding.rvMessages.apply {
             adapter = chatAdapter
             layoutManager = LinearLayoutManager(requireContext()).apply {
-                stackFromEnd = true // Start from bottom
+                // Messages will now show from top to bottom naturally
+                reverseLayout = false
+                stackFromEnd = false
             }
         }
     }

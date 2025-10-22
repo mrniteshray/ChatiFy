@@ -1,5 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Sky Blue Theme Colors -->
+    <color name="sky_blue_primary">#00A8E8</color>
+    <color name="sky_blue_primary_dark">#007EA7</color>
+    <color name="sky_blue_primary_light">#4DD0E1</color>
+    <color name="sky_blue_accent">#00BCD4</color>
+    
+    <!-- Surface and Background -->
+    <color name="surface_light">#F8FBFF</color>
+    <color name="surface_white">#FFFFFF</color>
+    <color name="background_gradient_start">#E3F2FD</color>
+    <color name="background_gradient_end">#FFFFFF</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#1A1A1A</color>
+    <color name="text_secondary">#666666</color>
+    <color name="text_hint">#999999</color>
+    <color name="text_on_primary">#FFFFFF</color>
+    
+    <!-- Message Bubble Colors -->
+    <color name="message_sent_bg">#00A8E8</color>
+    <color name="message_received_bg">#F0F4F8</color>
+    
+    <!-- Divider and Border -->
+    <color name="divider">#E0E0E0</color>
+    <color name="border_light">#E8F4F8</color>
+    
+    <!-- Status Colors -->
+    <color name="success">#4CAF50</color>
+    <color name="error">#F44336</color>
+    <color name="warning">#FF9800</color>
+    
+    <!-- Standard Colors -->
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
 </resources>

@@ -6,16 +6,16 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="4dp"
     android:layout_marginBottom="4dp"
-    android:layout_marginStart="48dp"
-    android:layout_marginEnd="8dp">
+    android:layout_marginStart="64dp"
+    android:layout_marginEnd="12dp">
 
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/messageCard"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="2dp"
-        app:cardBackgroundColor="?attr/colorPrimary"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="@color/sky_blue_primary"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -23,21 +23,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp"
+            android:padding="14dp"
             android:maxWidth="280dp">
 
             <TextView
                 android:id="@+id/tvMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@android:color/white"
+                android:textColor="@color/white"
                 android:textSize="16sp"
-                tools:text="This is a sent message" />
+                android:lineSpacingExtra="2dp"
+                tools:text="This is a sent message with some text" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="6dp"
                 android:orientation="horizontal"
                 android:gravity="end">
 
@@ -45,20 +46,21 @@
                     android:id="@+id/tvTimestamp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@android:color/white"
-                    android:textSize="11sp"
-                    android:alpha="0.8"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:alpha="0.9"
+                    android:fontFamily="sans-serif-medium"
                     tools:text="10:30 AM" />
 
                 <ImageView
                     android:id="@+id/ivReadStatus"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:layout_marginStart="4dp"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="6dp"
                     android:src="@drawable/ic_check"
                     android:contentDescription="Read status"
-                    app:tint="@android:color/white"
-                    android:alpha="0.8" />
+                    app:tint="@color/white"
+                    android:alpha="0.9" />
 
             </LinearLayout>
 

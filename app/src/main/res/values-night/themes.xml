@@ -1,7 +1,32 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.ChatiFy" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Sky Blue Primary Colors (slightly adjusted for dark mode) -->
+        <item name="colorPrimary">@color/sky_blue_primary_light</item>
+        <item name="colorPrimaryVariant">@color/sky_blue_primary</item>
+        <item name="colorOnPrimary">@color/text_primary</item>
+        
+        <!-- Secondary Colors -->
+        <item name="colorSecondary">@color/sky_blue_accent</item>
+        <item name="colorSecondaryVariant">@color/sky_blue_primary_light</item>
+        <item name="colorOnSecondary">@color/text_primary</item>
+        
+        <!-- Surface and Background (Dark Mode) -->
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">#E0E0E0</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorOnBackground">#E0E0E0</item>
+        
+        <!-- Status Bar and Navigation Bar -->
+        <item name="android:statusBarColor">@color/sky_blue_primary_dark</item>
+        <item name="android:navigationBarColor">#1E1E1E</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        
+        <!-- Material Components Styling -->
+        <item name="shapeAppearanceSmallComponent">@style/ShapeAppearance.ChatiFy.SmallComponent</item>
+        <item name="shapeAppearanceMediumComponent">@style/ShapeAppearance.ChatiFy.MediumComponent</item>
+        <item name="materialButtonStyle">@style/Widget.ChatiFy.Button</item>
+        <item name="textInputStyle">@style/Widget.ChatiFy.TextInputLayout</item>
     </style>
 </resources>

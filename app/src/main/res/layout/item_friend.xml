@@ -1,62 +1,91 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="8dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="2dp">
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    app:cardBackgroundColor="@color/white"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <ImageView
-            android:id="@+id/ivProfilePic"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/circle_background"
-            android:contentDescription="Profile Picture"
-            android:padding="12dp"
-            android:src="@drawable/ic_person"
+        <!-- Avatar Circle -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/avatarCard"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/sky_blue_primary_light"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent">
 
-        <TextView
-            android:id="@+id/tvFriendName"
+            <ImageView
+                android:id="@+id/ivProfilePic"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:contentDescription="Profile Picture"
+                android:padding="14dp"
+                android:src="@drawable/ic_person"
+                android:scaleType="centerCrop"
+                app:tint="@color/sky_blue_primary" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
+            android:orientation="vertical"
+            android:layout_marginStart="16dp"
             android:layout_marginEnd="8dp"
-            android:text="Friend Name"
-            android:textSize="16sp"
-            android:textStyle="bold"
+            app:layout_constraintStart_toEndOf="@id/avatarCard"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@id/ivProfilePic"
-            app:layout_constraintTop_toTopOf="@id/ivProfilePic" />
+            app:layout_constraintTop_toTopOf="@id/avatarCard">
 
-        <TextView
-            android:id="@+id/tvFriendEmail"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="friend@email.com"
-            android:textColor="@android:color/darker_gray"
-            android:textSize="14sp"
-            app:layout_constraintEnd_toEndOf="@id/tvFriendName"
-            app:layout_constraintStart_toStartOf="@id/tvFriendName"
-            app:layout_constraintTop_toBottomOf="@id/tvFriendName" />
+            <TextView
+                android:id="@+id/tvFriendName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Friend Name"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="John Doe" />
 
-        <TextView
-            android:id="@+id/tvOnlineStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Online"
-            android:textColor="@android:color/holo_green_dark"
-            android:textSize="12sp"
-            app:layout_constraintBottom_toBottomOf="@id/ivProfilePic"
-            app:layout_constraintStart_toStartOf="@id/tvFriendName" />
+            <TextView
+                android:id="@+id/tvFriendEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="friend@email.com"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="john.doe@example.com" />
+
+            <TextView
+                android:id="@+id/tvOnlineStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Online"
+                android:textColor="@color/success"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
