@@ -137,12 +137,7 @@ class ChatRepositoryImpl : ChatRepository {
         }
     }
 
-    /**
-     * REALTIME DB: Generate unique chat ID
-     * Based on user IDs to ensure consistency
-     */
-    override fun generateChatId(userId1: String, userId2: String): String {
-        // Create a consistent chat ID by sorting user IDs
+    override fun getChatId(userId1: String, userId2: String): String {
         return if (userId1 < userId2) {
             "${userId1}_${userId2}"
         } else {

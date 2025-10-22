@@ -37,34 +37,12 @@ class FriendsAdapter(
                 tvFriendName.text = friend.name
                 tvFriendEmail.text = friend.email
                 
-                // Set online status
-                if (friend.isOnline) {
-                    tvOnlineStatus.text = "Online"
-                } else {
-                    tvOnlineStatus.text = formatLastSeen(friend.lastSeen)
-                }
+                // Set online status text (removed presence feature)
+                tvOnlineStatus.text = "Offline"
 
                 // Handle click
                 root.setOnClickListener {
                     onFriendClick(friend)
-                }
-            }
-        }
-
-        private fun formatLastSeen(timestamp: Long): String {
-            if (timestamp == 0L) return "Offline"
-            
-            val now = System.currentTimeMillis()
-            val diff = now - timestamp
-            
-            return when {
-                diff < 60000 -> "Just now"
-                diff < 3600000 -> "${diff / 60000} min ago"
-                diff < 86400000 -> "${diff / 3600000} hr ago"
-                diff < 604800000 -> "${diff / 86400000} days ago"
-                else -> {
-                    val sdf = SimpleDateFormat("MMM dd", Locale.getDefault())
-                    sdf.format(Date(timestamp))
                 }
             }
         }

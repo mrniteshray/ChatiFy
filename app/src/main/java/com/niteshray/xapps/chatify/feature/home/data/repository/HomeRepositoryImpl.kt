@@ -16,7 +16,6 @@ class HomeRepositoryImpl : HomeRepository {
 
     /**
      * FIRESTORE: Get all users (better for complex queries, pagination, filtering)
-     * REALTIME DB: Get presence data (real-time online/offline status)
      */
     override suspend fun getAllUsers(currentUserId: String): Result<List<User>> {
         return try {
@@ -39,20 +38,10 @@ class HomeRepositoryImpl : HomeRepository {
                 
                 // Exclude current user
                 if (uid != currentUserId && name.isNotEmpty()) {
-                    // Get presence data from Realtime DB
-                    val presenceSnapshot = realtimeDb.child("presence")
-                        .child(uid)
-                        .get()
-                        .await()
-                    
                     val user = User(
                         uid = uid,
                         name = name,
-                        email = email,
-                        profilePictureUrl = doc.getString("profilePictureUrl") ?: "",
-                        isOnline = presenceSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false,
-                        lastSeen = presenceSnapshot.child("lastSeen").getValue(Long::class.java) ?: 0L,
-                        friends = (doc.get("friends") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+                        email = email
                     )
                     allUsers.add(user)
                 }
@@ -69,7 +58,6 @@ class HomeRepositoryImpl : HomeRepository {
 
     /**
      * FIRESTORE: Get user profile data
-     * REALTIME DB: Get presence data
      */
     override suspend fun getCurrentUserData(userId: String): Result<User> {
         return try {
@@ -79,20 +67,10 @@ class HomeRepositoryImpl : HomeRepository {
                 .get()
                 .await()
             
-            // REALTIME DB: Get presence data
-            val presenceSnapshot = realtimeDb.child("presence")
-                .child(userId)
-                .get()
-                .await()
-            
             val user = User(
                 uid = userDoc.getString("uid") ?: "",
                 name = userDoc.getString("name") ?: "",
-                email = userDoc.getString("email") ?: "",
-                profilePictureUrl = userDoc.getString("profilePictureUrl") ?: "",
-                isOnline = presenceSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false,
-                lastSeen = presenceSnapshot.child("lastSeen").getValue(Long::class.java) ?: 0L,
-                friends = (userDoc.get("friends") as? List<*>)?.mapNotNull { it as? String } ?: emptyList()
+                email = userDoc.getString("email") ?: ""
             )
             Result.success(user)
         } catch (e: Exception) {
