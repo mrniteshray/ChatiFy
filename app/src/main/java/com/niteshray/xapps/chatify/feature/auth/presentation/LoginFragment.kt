@@ -54,6 +54,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 is AuthState.Success -> {
                     binding.progressBar.visibility = View.GONE
                     Toast.makeText(context, "Login Successful!", Toast.LENGTH_SHORT).show()
+                    // Navigate to HomeFragment
+                    findNavController().navigate(R.id.action_loginFragment_to_homeFragment)
                 }
                 is AuthState.Error -> {
                     binding.progressBar.visibility = View.GONE

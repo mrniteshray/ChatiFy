@@ -3,64 +3,46 @@ package com.niteshray.xapps.chatify.feature.auth.presentation
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FirebaseFirestore
+import androidx.lifecycle.viewModelScope
+import com.niteshray.xapps.chatify.feature.auth.data.repository.AuthRepositoryImpl
+import com.niteshray.xapps.chatify.feature.auth.domain.repository.AuthRepository
+import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
-
-    private val auth = FirebaseAuth.getInstance()
-    private val firestore = FirebaseFirestore.getInstance()
+class AuthViewModel(
+    private val repository: AuthRepository = AuthRepositoryImpl()
+) : ViewModel() {
 
     private val _authState = MutableLiveData<AuthState>(AuthState.Idle)
     val authState: LiveData<AuthState> = _authState
 
     fun login(email: String, password: String) {
         _authState.value = AuthState.Loading
-
-        auth.signInWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                _authState.value = AuthState.Success
+        
+        viewModelScope.launch {
+            val result = repository.login(email, password)
+            _authState.value = if (result.isSuccess) {
+                AuthState.Success
+            } else {
+                AuthState.Error(result.exceptionOrNull()?.message ?: "Login failed")
             }
-            .addOnFailureListener { exception ->
-                _authState.value = AuthState.Error(
-                    exception.message ?: "Login failed"
-                )
-            }
+        }
     }
 
     fun signup(email: String, password: String, name: String) {
         _authState.value = AuthState.Loading
-
-        auth.createUserWithEmailAndPassword(email, password)
-            .addOnSuccessListener { authResult ->
-                // Save user data to Firestore
-                val userId = authResult.user?.uid ?: return@addOnSuccessListener
-                val userData = hashMapOf(
-                    "uid" to userId,
-                    "name" to name,
-                    "email" to email,
-                    "isOnline" to true,
-                    "lastSeen" to System.currentTimeMillis()
-                )
-
-                firestore.collection("users")
-                    .document(userId)
-                    .set(userData)
-                    .addOnSuccessListener {
-                        _authState.value = AuthState.Success
-                    }
-                    .addOnFailureListener { exception ->
-                        _authState.value = AuthState.Error(
-                            exception.message ?: "Failed to save user data"
-                        )
-                    }
+        
+        viewModelScope.launch {
+            val result = repository.signup(email, password, name)
+            _authState.value = if (result.isSuccess) {
+                AuthState.Success
+            } else {
+                AuthState.Error(result.exceptionOrNull()?.message ?: "Signup failed")
             }
-            .addOnFailureListener { exception ->
-                _authState.value = AuthState.Error(
-                    exception.message ?: "Signup failed"
-                )
-            }
+        }
     }
+
+
+    fun getCurrentUser() = viewModelScope.launch { repository.getCurrentUser() }
 }
 
 sealed class AuthState {

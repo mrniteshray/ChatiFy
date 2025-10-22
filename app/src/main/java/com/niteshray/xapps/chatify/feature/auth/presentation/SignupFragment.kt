@@ -46,8 +46,8 @@ class SignupFragment : Fragment(R.layout.fragment_signup) {
                 is AuthState.Success -> {
                     binding.progressBar.visibility = View.GONE
                     Toast.makeText(context, "Signup Successful!", Toast.LENGTH_SHORT).show()
-                    // Go back to login or navigate to user list
-                    findNavController().popBackStack()
+                    // Navigate to HomeFragment
+                    findNavController().navigate(R.id.action_signupFragment_to_homeFragment)
                 }
                 is AuthState.Error -> {
                     binding.progressBar.visibility = View.GONE
