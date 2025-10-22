@@ -20,8 +20,8 @@
         app:titleTextColor="@color/white"
         app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
 
-    <!-- Messages Container with RelativeLayout for proper keyboard handling -->
-    <RelativeLayout
+    <!-- Messages Container -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1">
@@ -31,7 +31,6 @@
             android:id="@+id/rvMessages"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_above="@id/messageInputContainer"
             android:clipToPadding="false"
             android:padding="12dp"
             android:paddingBottom="8dp"
@@ -43,7 +42,7 @@
             android:id="@+id/progressBar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_gravity="center"
             android:visibility="gone"
             android:indeterminateTint="@color/sky_blue_primary" />
 
@@ -52,7 +51,7 @@
             android:id="@+id/tvEmptyState"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
+            android:layout_gravity="center"
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="gone">
@@ -85,66 +84,65 @@
 
         </LinearLayout>
 
-        <!-- Message Input Container - Fixed at bottom -->
-        <com.google.android.material.card.MaterialCardView
-            android:id="@+id/messageInputContainer"
+    </FrameLayout>
+
+    <!-- Message Input Container -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/messageInputContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="12dp"
+        app:cardCornerRadius="28dp"
+        app:cardElevation="8dp"
+        app:cardBackgroundColor="@color/white">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_margin="12dp"
-            app:cardCornerRadius="28dp"
-            app:cardElevation="8dp"
-            app:cardBackgroundColor="@color/white">
+            android:padding="6dp">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etMessage"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:padding="6dp">
+                android:background="@android:color/transparent"
+                android:hint="Type a message..."
+                android:textColorHint="@color/text_hint"
+                android:textColor="@color/text_primary"
+                android:inputType="textCapSentences|textMultiLine"
+                android:imeOptions="actionSend"
+                android:maxLines="5"
+                android:minHeight="48dp"
+                android:paddingStart="20dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:textSize="15sp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@id/btnSend"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etMessage"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:background="@android:color/transparent"
-                    android:hint="Type a message..."
-                    android:textColorHint="@color/text_hint"
-                    android:textColor="@color/text_primary"
-                    android:inputType="textCapSentences|textMultiLine"
-                    android:imeOptions="actionSend"
-                    android:maxLines="5"
-                    android:minHeight="48dp"
-                    android:paddingStart="20dp"
-                    android:paddingEnd="12dp"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp"
-                    android:textSize="15sp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toStartOf="@id/btnSend"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSend"
+                style="@style/Widget.Material3.Button.IconButton.Filled"
+                android:layout_width="52dp"
+                android:layout_height="52dp"
+                android:layout_marginEnd="6dp"
+                android:contentDescription="Send"
+                app:backgroundTint="@color/sky_blue_primary"
+                app:icon="@drawable/ic_send"
+                app:iconGravity="textStart"
+                app:iconPadding="0dp"
+                app:iconTint="@color/white"
+                app:cornerRadius="26dp"
+                app:elevation="0dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnSend"
-                    style="@style/Widget.Material3.Button.IconButton.Filled"
-                    android:layout_width="52dp"
-                    android:layout_height="52dp"
-                    android:layout_marginEnd="6dp"
-                    android:contentDescription="Send"
-                    app:backgroundTint="@color/sky_blue_primary"
-                    app:icon="@drawable/ic_send"
-                    app:iconGravity="textStart"
-                    app:iconPadding="0dp"
-                    app:iconTint="@color/white"
-                    app:cornerRadius="26dp"
-                    app:elevation="0dp"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
 
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-    </RelativeLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </LinearLayout>
