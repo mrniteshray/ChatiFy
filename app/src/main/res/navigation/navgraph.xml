@@ -43,5 +43,20 @@
             app:destination="@id/loginFragment"
             app:popUpTo="@id/homeFragment"
             app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_homeFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.niteshray.xapps.chatify.feature.chat.presentation.ChatFragment"
+        android:label="fragment_chat"
+        tools:layout="@layout/fragment_chat" >
+        <argument
+            android:name="userId"
+            app:argType="string" />
+        <argument
+            android:name="userName"
+            app:argType="string" />
     </fragment>
 </navigation>

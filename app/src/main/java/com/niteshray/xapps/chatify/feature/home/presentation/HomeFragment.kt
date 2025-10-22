@@ -44,8 +44,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun setupRecyclerView() {
         usersAdapter = UsersAdapter { user ->
-            // Handle user click - can add chat functionality later
-            Toast.makeText(context, "Clicked on ${user.name}", Toast.LENGTH_SHORT).show()
+            // Navigate to chat screen
+            val action = HomeFragmentDirections.actionHomeFragmentToChatFragment(
+                userId = user.uid,
+                userName = user.name
+            )
+            findNavController().navigate(action)
         }
 
         binding.rvUsers.apply {
