@@ -1,16 +1,24 @@
 package com.niteshray.xapps.chatify.feature.home.presentation
 
+import android.app.Dialog
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.card.MaterialCardView
 import com.google.firebase.auth.FirebaseAuth
 import com.niteshray.xapps.chatify.R
+import com.niteshray.xapps.chatify.databinding.DialogFriendRequestsBinding
 import com.niteshray.xapps.chatify.databinding.FragmentHomeBinding
-import com.niteshray.xapps.chatify.feature.home.presentation.adapter.UsersAdapter
+import com.niteshray.xapps.chatify.databinding.LayoutNotificationBadgeBinding
+import com.niteshray.xapps.chatify.feature.auth.domain.model.User
+import com.niteshray.xapps.chatify.feature.home.domain.model.RequestStatus
+import com.niteshray.xapps.chatify.feature.home.presentation.adapter.ConnectedFriendsAdapter
+import com.niteshray.xapps.chatify.feature.home.presentation.adapter.FriendRequestsAdapter
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
 
@@ -18,19 +26,39 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private val binding get() = _binding!!
 
     private val viewModel: HomeViewModel by viewModels()
-    private lateinit var usersAdapter: UsersAdapter
+    private var searchedUser: User? = null
+    private var currentUserId: String? = null
+    
+    private lateinit var connectedFriendsAdapter: ConnectedFriendsAdapter
+    private var friendRequestsDialog: Dialog? = null
+    private var badgeBinding: LayoutNotificationBadgeBinding? = null
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         _binding = FragmentHomeBinding.bind(view)
 
+        currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+        
         setupToolbar()
-        setupRecyclerView()
-        observeUsers()
-        loadUsers()
+        setupSearchListeners()
+        setupConnectedFriendsList()
+        observeStates()
+        
+        // Load connected friends on start
+        currentUserId?.let { viewModel.loadConnectedFriends(it) }
+        currentUserId?.let { viewModel.loadFriendRequests(it) }
     }
 
     private fun setupToolbar() {
+        // Setup notification badge
+        val notificationItem = binding.toolbar.menu.findItem(R.id.action_notifications)
+        badgeBinding = LayoutNotificationBadgeBinding.inflate(layoutInflater)
+        notificationItem.actionView = badgeBinding?.root
+        
+        badgeBinding?.root?.setOnClickListener {
+            showFriendRequestsDialog()
+        }
+        
         binding.toolbar.setOnMenuItemClickListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.action_logout -> {
@@ -41,10 +69,40 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             }
         }
     }
+    
+    private fun updateNotificationBadge(count: Int) {
+        badgeBinding?.apply {
+            if (count > 0) {
+                cvBadge.visibility = View.VISIBLE
+                tvBadgeCount.text = if (count > 99) "99+" else count.toString()
+            } else {
+                cvBadge.visibility = View.GONE
+            }
+        }
+    }
 
-    private fun setupRecyclerView() {
-        usersAdapter = UsersAdapter { user ->
-            // Navigate to chat screen
+    private fun setupSearchListeners() {
+        binding.btnSearch.setOnClickListener {
+            searchUser()
+        }
+
+        binding.etUsername.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                searchUser()
+                true
+            } else {
+                false
+            }
+        }
+
+        binding.btnSendRequest.setOnClickListener {
+            sendFriendRequest()
+        }
+    }
+
+    private fun setupConnectedFriendsList() {
+        connectedFriendsAdapter = ConnectedFriendsAdapter { user ->
+            // Navigate to chat with connected friend
             val action = HomeFragmentDirections.actionHomeFragmentToChatFragment(
                 userId = user.uid,
                 userName = user.name
@@ -52,42 +110,243 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             findNavController().navigate(action)
         }
 
-        binding.rvUsers.apply {
-            adapter = usersAdapter
+        binding.rvConnectedFriends.apply {
+            adapter = connectedFriendsAdapter
             layoutManager = LinearLayoutManager(requireContext())
         }
     }
 
-    private fun observeUsers() {
-        viewModel.usersState.observe(viewLifecycleOwner) { state ->
+    private fun searchUser() {
+        val username = binding.etUsername.text.toString().trim()
+        
+        if (username.isEmpty()) {
+            binding.etUsername.error = "Enter a username"
+            return
+        }
+
+        // Hide result card and show loading
+        binding.cardResult.visibility = View.GONE
+        binding.tvStatus.visibility = View.GONE
+        viewModel.searchUser(username)
+    }
+
+    private fun sendFriendRequest() {
+        val user = searchedUser ?: return
+        val currentUser = FirebaseAuth.getInstance().currentUser ?: return
+
+        // Get current user data from Firestore to get username
+        currentUserId?.let { userId ->
+            viewModel.getCurrentUserData(userId) { currentUserData ->
+                viewModel.sendFriendRequest(
+                    fromUserId = currentUser.uid,
+                    toUserId = user.uid,
+                    fromUsername = currentUserData?.username ?: "",
+                    fromUserName = currentUserData?.name ?: currentUser.email ?: ""
+                )
+            }
+        }
+    }
+
+    private fun showFriendRequestsDialog() {
+        val dialogBinding = DialogFriendRequestsBinding.inflate(layoutInflater)
+        
+        friendRequestsDialog = Dialog(requireContext()).apply {
+            setContentView(dialogBinding.root)
+            window?.setBackgroundDrawableResource(android.R.color.transparent)
+            window?.setLayout(
+                (resources.displayMetrics.widthPixels * 0.9).toInt(),
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
+
+        val requestsAdapter = FriendRequestsAdapter(
+            onAcceptClick = { request ->
+                currentUserId?.let { userId ->
+                    viewModel.acceptFriendRequest(request.id, userId, request.fromUserId)
+                }
+            },
+            onDeclineClick = { request ->
+                currentUserId?.let { userId ->
+                    viewModel.declineFriendRequest(request.id, userId)
+                }
+            }
+        )
+
+        dialogBinding.rvFriendRequests.apply {
+            adapter = requestsAdapter
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+
+        // Observe friend requests
+        viewModel.friendRequestsState.observe(viewLifecycleOwner) { state ->
             when (state) {
-                is UsersState.Loading -> {
+                is FriendRequestsState.Success -> {
+                    val requestCount = state.requests.size
+                    updateNotificationBadge(requestCount)
+                    
+                    if (requestCount == 0) {
+                        dialogBinding.tvNoRequests.visibility = View.VISIBLE
+                        dialogBinding.rvFriendRequests.visibility = View.GONE
+                    } else {
+                        dialogBinding.tvNoRequests.visibility = View.GONE
+                        dialogBinding.rvFriendRequests.visibility = View.VISIBLE
+                        requestsAdapter.submitList(state.requests)
+                    }
+                }
+                is FriendRequestsState.Error -> {
+                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        dialogBinding.ivClose.setOnClickListener {
+            friendRequestsDialog?.dismiss()
+        }
+
+        friendRequestsDialog?.show()
+    }
+
+    private fun observeStates() {
+        observeSearchResult()
+        observeConnectedFriends()
+        observeRequestActions()
+        observeFriendshipStatus()
+        observeFriendRequests()
+    }
+    
+    private fun observeFriendRequests() {
+        viewModel.friendRequestsState.observe(viewLifecycleOwner) { state ->
+            if (state is FriendRequestsState.Success) {
+                updateNotificationBadge(state.requests.size)
+            }
+        }
+    }
+
+    private fun observeSearchResult() {
+        viewModel.searchState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is SearchState.Loading -> {
                     binding.progressBar.visibility = View.VISIBLE
-                    binding.rvUsers.visibility = View.GONE
-                    binding.tvEmptyState.visibility = View.GONE
+                    binding.cardResult.visibility = View.GONE
+                    binding.layoutInitial.visibility = View.GONE
                 }
-                is UsersState.Success -> {
+                is SearchState.Success -> {
                     binding.progressBar.visibility = View.GONE
-                    binding.rvUsers.visibility = View.VISIBLE
-                    binding.tvEmptyState.visibility = View.GONE
-                    usersAdapter.submitList(state.users)
+                    
+                    if (state.user != null) {
+                        searchedUser = state.user
+                        binding.cardResult.visibility = View.VISIBLE
+                        binding.layoutInitial.visibility = View.GONE
+                        binding.tvUserName.text = state.user.name
+                        binding.tvUsername.text = "@${state.user.username}"
+                        
+                        // Check friendship status
+                        currentUserId?.let { 
+                            viewModel.checkFriendshipStatus(it, state.user.uid)
+                        }
+                    } else {
+                        binding.cardResult.visibility = View.GONE
+                        binding.layoutInitial.visibility = View.VISIBLE
+                        Toast.makeText(context, "User not found", Toast.LENGTH_SHORT).show()
+                    }
                 }
-                is UsersState.Empty -> {
+                is SearchState.Error -> {
                     binding.progressBar.visibility = View.GONE
-                    binding.rvUsers.visibility = View.GONE
-                    binding.tvEmptyState.visibility = View.VISIBLE
-                }
-                is UsersState.Error -> {
-                    binding.progressBar.visibility = View.GONE
+                    binding.cardResult.visibility = View.GONE
+                    binding.layoutInitial.visibility = View.VISIBLE
                     Toast.makeText(context, state.message, Toast.LENGTH_LONG).show()
+                }
+                is SearchState.Idle -> {
+                    binding.progressBar.visibility = View.GONE
+                    binding.layoutInitial.visibility = View.VISIBLE
                 }
             }
         }
     }
 
-    private fun loadUsers() {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        viewModel.loadAllUsers(currentUserId)
+    private fun observeConnectedFriends() {
+        viewModel.connectedFriendsState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is ConnectedFriendsState.Success -> {
+                    if (state.friends.isEmpty()) {
+                        binding.tvFriendsTitle.visibility = View.GONE
+                        binding.rvConnectedFriends.visibility = View.GONE
+                    } else {
+                        binding.tvFriendsTitle.visibility = View.VISIBLE
+                        binding.rvConnectedFriends.visibility = View.VISIBLE
+                        connectedFriendsAdapter.submitList(state.friends)
+                    }
+                }
+                is ConnectedFriendsState.Error -> {
+                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun observeRequestActions() {
+        viewModel.requestActionState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is RequestActionState.RequestSent -> {
+                    Toast.makeText(context, "Friend request sent!", Toast.LENGTH_SHORT).show()
+                    binding.btnSendRequest.visibility = View.GONE
+                    binding.tvStatus.visibility = View.VISIBLE
+                    binding.tvStatus.text = "Request sent"
+                }
+                is RequestActionState.RequestAccepted -> {
+                    Toast.makeText(context, "Friend request accepted!", Toast.LENGTH_SHORT).show()
+                    currentUserId?.let { 
+                        viewModel.loadFriendRequests(it)
+                        viewModel.loadConnectedFriends(it)
+                    }
+                    friendRequestsDialog?.dismiss()
+                }
+                is RequestActionState.RequestDeclined -> {
+                    Toast.makeText(context, "Request declined", Toast.LENGTH_SHORT).show()
+                    currentUserId?.let { viewModel.loadFriendRequests(it) }
+                }
+                is RequestActionState.Error -> {
+                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
+    private fun observeFriendshipStatus() {
+        viewModel.friendshipStatusState.observe(viewLifecycleOwner) { state ->
+            when (state) {
+                is FriendshipStatusState.Status -> {
+                    when (state.status) {
+                        RequestStatus.ACCEPTED -> {
+                            // Already friends - hide send request, show status
+                            binding.btnSendRequest.visibility = View.GONE
+                            binding.tvStatus.visibility = View.VISIBLE
+                            binding.tvStatus.text = "Already connected"
+                        }
+                        RequestStatus.PENDING -> {
+                            // Request already sent
+                            binding.btnSendRequest.visibility = View.GONE
+                            binding.tvStatus.visibility = View.VISIBLE
+                            binding.tvStatus.text = "Request pending"
+                        }
+                        null -> {
+                            // No connection - show send request button
+                            binding.btnSendRequest.visibility = View.VISIBLE
+                            binding.tvStatus.visibility = View.GONE
+                        }
+                        else -> {
+                            binding.btnSendRequest.visibility = View.VISIBLE
+                            binding.tvStatus.visibility = View.GONE
+                        }
+                    }
+                }
+                is FriendshipStatusState.Error -> {
+                    // Show button by default on error
+                    binding.btnSendRequest.visibility = View.VISIBLE
+                    binding.tvStatus.visibility = View.GONE
+                }
+            }
+        }
     }
 
     private fun logout() {
@@ -97,6 +356,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        friendRequestsDialog?.dismiss()
         _binding = null
     }
 }

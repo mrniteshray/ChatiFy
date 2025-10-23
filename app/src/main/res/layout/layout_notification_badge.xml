@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="4dp">
+
+    <ImageView
+        android:id="@+id/ivNotificationIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_notifications"
+        app:tint="?attr/colorOnSurface" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cvBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="-2dp"
+        android:layout_marginEnd="-2dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="#FF3B30"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="2dp">
+
+        <TextView
+            android:id="@+id/tvBadgeCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:minWidth="20dp"
+            android:gravity="center"
+            android:paddingHorizontal="4dp"
+            android:paddingVertical="2dp"
+            android:text="0"
+            android:textColor="@android:color/white"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+    </com.google.android.material.card.MaterialCardView>
+
+</FrameLayout>

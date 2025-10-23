@@ -65,10 +65,31 @@
             android:padding="24dp">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilUsername"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Username (unique)"
+                app:startIconDrawable="@drawable/ic_person"
+                app:startIconTint="@color/sky_blue_primary"
+                app:helperText="Others will use this to find you"
+                app:helperTextTextColor="@color/text_hint"
+                style="@style/Widget.ChatiFy.TextInputLayout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUsername"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    android:textSize="16sp" />
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="Full Name"
+                android:layout_marginTop="16dp"
                 app:startIconDrawable="@drawable/ic_person"
                 app:startIconTint="@color/sky_blue_primary"
                 style="@style/Widget.ChatiFy.TextInputLayout">

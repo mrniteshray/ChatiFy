@@ -26,12 +26,13 @@ class SignupFragment : Fragment(R.layout.fragment_signup) {
 
     private fun setupClickListeners() {
         binding.btnSignup.setOnClickListener {
+            val username = binding.etUsername.text.toString().trim()
             val name = binding.etName.text.toString().trim()
             val email = binding.etEmail.text.toString().trim()
             val password = binding.etPassword.text.toString().trim()
 
-            if (validateInput(name, email, password)) {
-                viewModel.signup(email, password, name)
+            if (validateInput(username, name, email, password)) {
+                viewModel.signup(email, password, name, username)
             }
         }
     }
@@ -62,7 +63,21 @@ class SignupFragment : Fragment(R.layout.fragment_signup) {
         }
     }
 
-    private fun validateInput(name: String, email: String, password: String): Boolean {
+    private fun validateInput(username: String, name: String, email: String, password: String): Boolean {
+        if (username.isEmpty()) {
+            binding.tilUsername.error = "Username is required"
+            return false
+        }
+        if (username.length < 3) {
+            binding.tilUsername.error = "Username must be at least 3 characters"
+            return false
+        }
+        if (!username.matches(Regex("^[a-zA-Z0-9_]+$"))) {
+            binding.tilUsername.error = "Username can only contain letters, numbers, and underscores"
+            return false
+        }
+        binding.tilUsername.error = null
+
         if (name.isEmpty()) {
             binding.tilName.error = "Name is required"
             return false

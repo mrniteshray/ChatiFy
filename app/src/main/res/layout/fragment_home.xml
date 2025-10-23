@@ -33,18 +33,154 @@
         android:background="@color/surface_light"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
+        <!-- Search Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardSearch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="16dp"
+            app:cardCornerRadius="28dp"
+            app:cardElevation="4dp"
+            app:cardBackgroundColor="@color/white"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="6dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etUsername"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:background="@android:color/transparent"
+                    android:hint="Enter username to connect"
+                    android:textColorHint="@color/text_hint"
+                    android:textColor="@color/text_primary"
+                    android:inputType="text"
+                    android:imeOptions="actionSearch"
+                    android:minHeight="56dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="12dp"
+                    android:textSize="15sp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toStartOf="@id/btnSearch"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSearch"
+                    style="@style/Widget.Material3.Button.IconButton.Filled"
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="Search"
+                    app:backgroundTint="@color/sky_blue_primary"
+                    app:icon="@drawable/ic_send"
+                    app:iconGravity="textStart"
+                    app:iconPadding="0dp"
+                    app:iconTint="@color/white"
+                    app:cornerRadius="28dp"
+                    app:elevation="0dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Search Result Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/cardResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="4dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/cardSearch"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <TextView
+                    android:id="@+id/tvUserName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_primary"
+                    tools:text="John Doe" />
+
+                <TextView
+                    android:id="@+id/tvUsername"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:textSize="14sp"
+                    android:textColor="@color/sky_blue_primary"
+                    tools:text="@johndoe" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnSendRequest"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Send Friend Request"
+                    android:textSize="16sp"
+                    android:background="@drawable/bg_button_primary"
+                    android:textColor="@color/white"
+                    app:elevation="0dp" />
+
+                <TextView
+                    android:id="@+id/tvStatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:visibility="gone"
+                    android:textSize="14sp"
+                    android:textColor="@color/text_hint" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Connected Friends Section -->
+        <TextView
+            android:id="@+id/tvFriendsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="24dp"
+            android:text="Connected Friends"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:visibility="gone"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/cardResult" />
+
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvUsers"
+            android:id="@+id/rvConnectedFriends"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:clipToPadding="false"
-            android:padding="12dp"
-            android:paddingTop="8dp"
+            android:paddingVertical="8dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tvFriendsTitle"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:listitem="@layout/item_user" />
+            tools:listitem="@layout/item_connected_friend" />
 
         <ProgressBar
             android:id="@+id/progressBar"
@@ -58,20 +194,20 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <LinearLayout
-            android:id="@+id/tvEmptyState"
+            android:id="@+id/layoutInitial"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
+            app:layout_constraintTop_toBottomOf="@id/cardSearch"
+            android:layout_marginTop="32dp">
 
             <ImageView
-                android:layout_width="80dp"
-                android:layout_height="80dp"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
                 android:src="@drawable/ic_person"
                 android:alpha="0.3"
                 app:tint="@color/sky_blue_primary" />
@@ -80,17 +216,18 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="No users found"
+                android:text="Connect with Friends"
                 android:textAlignment="center"
-                android:textColor="@color/text_secondary"
-                android:textSize="18sp"
+                android:textColor="@color/text_primary"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="Start chatting with other users"
+                android:layout_marginHorizontal="32dp"
+                android:text="Enter a username above to find and connect with other users"
                 android:textAlignment="center"
                 android:textColor="@color/text_hint"
                 android:textSize="14sp" />

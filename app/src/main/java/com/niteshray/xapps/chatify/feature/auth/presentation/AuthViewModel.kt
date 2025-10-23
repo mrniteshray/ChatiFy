@@ -28,11 +28,11 @@ class AuthViewModel(
         }
     }
 
-    fun signup(email: String, password: String, name: String) {
+    fun signup(email: String, password: String, name: String, username: String) {
         _authState.value = AuthState.Loading
         
         viewModelScope.launch {
-            val result = repository.signup(email, password, name)
+            val result = repository.signup(email, password, name, username)
             _authState.value = if (result.isSuccess) {
                 AuthState.Success
             } else {

@@ -25,12 +25,18 @@ class AuthRepositoryImpl : AuthRepository {
         }
     }
 
-    override suspend fun signup(email: String, password: String, name: String): Result<FirebaseUser> {
+    override suspend fun signup(email: String, password: String, name: String, username: String): Result<FirebaseUser> {
         return try {
+            // Check if username is available
+            if (!isUsernameAvailable(username)) {
+                return Result.failure(Exception("Username '$username' is already taken"))
+            }
+            
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             authResult.user?.let { firebaseUser ->
                 val user = User(
                     uid = firebaseUser.uid,
+                    username = username.lowercase(),
                     name = name,
                     email = email
                 )
@@ -49,12 +55,14 @@ class AuthRepositoryImpl : AuthRepository {
             // FIRESTORE: Store user profile (structured data, queryable)
             val userData = hashMapOf(
                 "uid" to user.uid,
+                "username" to user.username,
                 "name" to user.name,
                 "email" to user.email,
+                "connectedFriends" to emptyList<String>(), // Initialize empty friends list
                 "createdAt" to System.currentTimeMillis()
             )
             
-            println("DEBUG: Saving user to Firestore - UID: ${user.uid}, Name: ${user.name}")
+            println("DEBUG: Saving user to Firestore - UID: ${user.uid}, Username: ${user.username}, Name: ${user.name}")
             
             firestore.collection("users")
                 .document(user.uid)
@@ -67,6 +75,20 @@ class AuthRepositoryImpl : AuthRepository {
             println("DEBUG: Error saving user: ${e.message}")
             e.printStackTrace()
             Result.failure(e)
+        }
+    }
+
+    override suspend fun isUsernameAvailable(username: String): Boolean {
+        return try {
+            val result = firestore.collection("users")
+                .whereEqualTo("username", username.lowercase())
+                .get()
+                .await()
+            
+            result.isEmpty
+        } catch (e: Exception) {
+            println("DEBUG: Error checking username: ${e.message}")
+            false
         }
     }
 
