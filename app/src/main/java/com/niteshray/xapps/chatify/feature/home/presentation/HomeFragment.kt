@@ -106,6 +106,13 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 false
             }
         }
+        
+        // Clear search when text changes
+        binding.etUsername.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus && binding.etUsername.text.toString().trim().isEmpty()) {
+                searchUser() // This will show normal screen
+            }
+        }
 
         binding.btnSendRequest.setOnClickListener {
             sendFriendRequest()
@@ -132,7 +139,12 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         val username = binding.etUsername.text.toString().trim()
         
         if (username.isEmpty()) {
-            binding.etUsername.error = "Enter a username"
+            // Show normal screen when search is empty
+            binding.cardResult.visibility = View.GONE
+            binding.tvStatus.visibility = View.GONE
+            binding.progressBar.visibility = View.GONE
+            binding.layoutInitial.visibility = View.VISIBLE
+            searchedUser = null
             return
         }
 

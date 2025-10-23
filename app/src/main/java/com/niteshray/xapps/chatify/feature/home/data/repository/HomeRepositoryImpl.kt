@@ -13,6 +13,9 @@ class HomeRepositoryImpl : HomeRepository {
     
     // Firestore - For user profiles (complex queries, structured data)
     private val firestore = FirebaseFirestore.getInstance()
+    
+    // Realtime Database - For friend requests (real-time updates)
+    private val realtimeDb = FirebaseDatabase.getInstance().reference
 
     /**
      * FIRESTORE: Search user by unique username
@@ -33,11 +36,15 @@ class HomeRepositoryImpl : HomeRepository {
             }
             
             val doc = snapshot.documents.first()
+            val connectedFriends = (doc.get("connectedFriends") as? List<*>)
+                ?.mapNotNull { it as? String } ?: emptyList()
+            
             val user = User(
                 uid = doc.getString("uid") ?: "",
                 username = doc.getString("username") ?: "",
                 name = doc.getString("name") ?: "",
-                email = doc.getString("email") ?: ""
+                email = doc.getString("email") ?: "",
+                connectedFriends = connectedFriends
             )
             
             println("DEBUG: User found - Username: ${user.username}, Name: ${user.name}")
@@ -60,11 +67,15 @@ class HomeRepositoryImpl : HomeRepository {
                 .get()
                 .await()
             
+            val connectedFriends = (userDoc.get("connectedFriends") as? List<*>)
+                ?.mapNotNull { it as? String } ?: emptyList()
+            
             val user = User(
                 uid = userDoc.getString("uid") ?: "",
                 username = userDoc.getString("username") ?: "",
                 name = userDoc.getString("name") ?: "",
-                email = userDoc.getString("email") ?: ""
+                email = userDoc.getString("email") ?: "",
+                connectedFriends = connectedFriends
             )
             Result.success(user)
         } catch (e: Exception) {
@@ -73,7 +84,7 @@ class HomeRepositoryImpl : HomeRepository {
     }
 
     /**
-     * FIRESTORE: Send friend request
+     * REALTIME DB: Send friend request
      */
     override suspend fun sendFriendRequest(
         fromUserId: String,
@@ -91,9 +102,14 @@ class HomeRepositoryImpl : HomeRepository {
                 "timestamp" to System.currentTimeMillis()
             )
 
-            firestore.collection("friendRequests")
-                .add(requestData)
-                .await()
+            // Generate unique key for the request
+            val requestKey = realtimeDb.child("friendRequests").push().key
+            
+            if (requestKey != null) {
+                realtimeDb.child("friendRequests").child(requestKey)
+                    .setValue(requestData)
+                    .await()
+            }
 
             Result.success(Unit)
         } catch (e: Exception) {
@@ -102,26 +118,32 @@ class HomeRepositoryImpl : HomeRepository {
     }
 
     /**
-     * FIRESTORE: Get friend requests for a user
+     * REALTIME DB: Get friend requests for a user
      */
     override suspend fun getFriendRequests(userId: String): Result<List<FriendRequest>> {
         return try {
-            val snapshot = firestore.collection("friendRequests")
-                .whereEqualTo("toUserId", userId)
-                .whereEqualTo("status", "PENDING")
+            val snapshot = realtimeDb.child("friendRequests")
+                .orderByChild("toUserId")
+                .equalTo(userId)
                 .get()
                 .await()
 
-            val requests = snapshot.documents.mapNotNull { doc ->
-                FriendRequest(
-                    id = doc.id,
-                    fromUserId = doc.getString("fromUserId") ?: "",
-                    fromUsername = doc.getString("fromUsername") ?: "",
-                    fromUserName = doc.getString("fromUserName") ?: "",
-                    toUserId = doc.getString("toUserId") ?: "",
-                    status = RequestStatus.PENDING,
-                    timestamp = doc.getLong("timestamp") ?: 0L
-                )
+            val requests = mutableListOf<FriendRequest>()
+            snapshot.children.forEach { data ->
+                val status = data.child("status").getValue(String::class.java)
+                if (status == "PENDING") {
+                    requests.add(
+                        FriendRequest(
+                            id = data.key ?: "",
+                            fromUserId = data.child("fromUserId").getValue(String::class.java) ?: "",
+                            fromUsername = data.child("fromUsername").getValue(String::class.java) ?: "",
+                            fromUserName = data.child("fromUserName").getValue(String::class.java) ?: "",
+                            toUserId = data.child("toUserId").getValue(String::class.java) ?: "",
+                            status = RequestStatus.PENDING,
+                            timestamp = data.child("timestamp").getValue(Long::class.java) ?: 0L
+                        )
+                    )
+                }
             }
 
             Result.success(requests)
@@ -131,7 +153,7 @@ class HomeRepositoryImpl : HomeRepository {
     }
 
     /**
-     * FIRESTORE: Accept friend request and add to connections
+     * REALTIME DB + FIRESTORE: Accept friend request and add to connections
      */
     override suspend fun acceptFriendRequest(
         requestId: String,
@@ -139,13 +161,13 @@ class HomeRepositoryImpl : HomeRepository {
         friendId: String
     ): Result<Unit> {
         return try {
-            // Update request status
-            firestore.collection("friendRequests")
-                .document(requestId)
-                .update("status", "ACCEPTED")
+            // Update request status in Realtime DB
+            realtimeDb.child("friendRequests").child(requestId)
+                .child("status")
+                .setValue("ACCEPTED")
                 .await()
 
-            // Add to both users' friends lists
+            // Add to both users' friends lists in Firestore
             firestore.collection("users")
                 .document(currentUserId)
                 .update("connectedFriends", FieldValue.arrayUnion(friendId))
@@ -163,13 +185,13 @@ class HomeRepositoryImpl : HomeRepository {
     }
 
     /**
-     * FIRESTORE: Decline friend request
+     * REALTIME DB: Decline friend request
      */
     override suspend fun declineFriendRequest(requestId: String): Result<Unit> {
         return try {
-            firestore.collection("friendRequests")
-                .document(requestId)
-                .update("status", "DECLINED")
+            realtimeDb.child("friendRequests").child(requestId)
+                .child("status")
+                .setValue("DECLINED")
                 .await()
 
             Result.success(Unit)
@@ -207,12 +229,16 @@ class HomeRepositoryImpl : HomeRepository {
 
                 friendsSnapshot.documents.forEach { doc ->
                     if (doc.exists()) {
+                        val connectedFriends = (doc.get("connectedFriends") as? List<*>)
+                            ?.mapNotNull { it as? String } ?: emptyList()
+                        
                         friends.add(
                             User(
                                 uid = doc.getString("uid") ?: "",
                                 username = doc.getString("username") ?: "",
                                 name = doc.getString("name") ?: "",
-                                email = doc.getString("email") ?: ""
+                                email = doc.getString("email") ?: "",
+                                connectedFriends = connectedFriends
                             )
                         )
                     }
@@ -226,15 +252,14 @@ class HomeRepositoryImpl : HomeRepository {
     }
 
     /**
-     * FIRESTORE: Check friendship status between two users
-     * Uses compound queries for better performance
+     * FIRESTORE + REALTIME DB: Check friendship status between two users
      */
     override suspend fun checkFriendshipStatus(
         currentUserId: String,
         otherUserId: String
     ): Result<RequestStatus?> {
         return try {
-            // Check if already connected
+            // Check if already connected in Firestore
             val userDoc = firestore.collection("users")
                 .document(currentUserId)
                 .get()
@@ -247,29 +272,24 @@ class HomeRepositoryImpl : HomeRepository {
                 return Result.success(RequestStatus.ACCEPTED)
             }
 
-            // Check for pending request (sent by current user)
-            val sentRequest = firestore.collection("friendRequests")
-                .whereEqualTo("fromUserId", currentUserId)
-                .whereEqualTo("toUserId", otherUserId)
-                .whereEqualTo("status", "PENDING")
-                .limit(1)
-                .get()
-                .await()
-
-            if (!sentRequest.isEmpty) {
-                return Result.success(RequestStatus.PENDING)
+            // Check for pending requests in Realtime DB
+            val snapshot = realtimeDb.child("friendRequests").get().await()
+            
+            var hasPendingRequest = false
+            snapshot.children.forEach { data ->
+                val status = data.child("status").getValue(String::class.java)
+                val fromUserId = data.child("fromUserId").getValue(String::class.java)
+                val toUserId = data.child("toUserId").getValue(String::class.java)
+                
+                if (status == "PENDING" && 
+                    ((fromUserId == currentUserId && toUserId == otherUserId) ||
+                     (fromUserId == otherUserId && toUserId == currentUserId))) {
+                    hasPendingRequest = true
+                    return@forEach
+                }
             }
 
-            // Check for pending request (sent by other user)
-            val receivedRequest = firestore.collection("friendRequests")
-                .whereEqualTo("fromUserId", otherUserId)
-                .whereEqualTo("toUserId", currentUserId)
-                .whereEqualTo("status", "PENDING")
-                .limit(1)
-                .get()
-                .await()
-
-            if (!receivedRequest.isEmpty) {
+            if (hasPendingRequest) {
                 return Result.success(RequestStatus.PENDING)
             }
 

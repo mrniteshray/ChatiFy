@@ -4,5 +4,6 @@ data class User(
     val uid: String = "",
     val username: String = "", // Unique identifier for connecting
     val name: String = "",
-    val email: String = ""
+    val email: String = "",
+    val connectedFriends: List<String> = emptyList() // List of connected friend UIDs
 )
