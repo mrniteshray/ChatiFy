@@ -2,7 +2,10 @@ package com.niteshray.xapps.chatify.feature.chat.presentation
 
 import android.os.Bundle
 import android.view.View
+import android.view.ViewTreeObserver
 import android.widget.Toast
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -32,6 +35,7 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
         setupToolbar()
         setupRecyclerView()
         setupMessageInput()
+        setupKeyboardListener()
         observeMessages()
         observeSendMessageState()
         
@@ -66,6 +70,33 @@ class ChatFragment : Fragment(R.layout.fragment_chat) {
             if (messageText.isNotBlank()) {
                 sendMessage(messageText)
             }
+        }
+        
+        // Scroll to bottom when user focuses on input field
+        binding.etMessage.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                binding.rvMessages.postDelayed({
+                    if (chatAdapter.itemCount > 0) {
+                        binding.rvMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                    }
+                }, 300)
+            }
+        }
+    }
+    
+    private fun setupKeyboardListener() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.root) { view, insets ->
+            val imeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            val imeHeight = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+            
+            if (imeVisible && chatAdapter.itemCount > 0) {
+                // Keyboard is visible, scroll to bottom
+                binding.rvMessages.post {
+                    binding.rvMessages.smoothScrollToPosition(chatAdapter.itemCount - 1)
+                }
+            }
+            
+            insets
         }
     }
 

@@ -180,6 +180,7 @@ class HomeRepositoryImpl : HomeRepository {
 
     /**
      * FIRESTORE: Get connected friends
+     * Optimized to fetch all friends in a single query
      */
     override suspend fun getConnectedFriends(userId: String): Result<List<User>> {
         return try {
@@ -195,22 +196,26 @@ class HomeRepositoryImpl : HomeRepository {
                 return Result.success(emptyList())
             }
 
+            // Firestore has a limit of 10 items for 'in' queries
+            // Split into chunks of 10
             val friends = mutableListOf<User>()
-            for (friendId in friendIds) {
-                val friendDoc = firestore.collection("users")
-                    .document(friendId)
+            friendIds.chunked(10).forEach { chunk ->
+                val friendsSnapshot = firestore.collection("users")
+                    .whereIn("uid", chunk)
                     .get()
                     .await()
 
-                if (friendDoc.exists()) {
-                    friends.add(
-                        User(
-                            uid = friendDoc.getString("uid") ?: "",
-                            username = friendDoc.getString("username") ?: "",
-                            name = friendDoc.getString("name") ?: "",
-                            email = friendDoc.getString("email") ?: ""
+                friendsSnapshot.documents.forEach { doc ->
+                    if (doc.exists()) {
+                        friends.add(
+                            User(
+                                uid = doc.getString("uid") ?: "",
+                                username = doc.getString("username") ?: "",
+                                name = doc.getString("name") ?: "",
+                                email = doc.getString("email") ?: ""
+                            )
                         )
-                    )
+                    }
                 }
             }
 
@@ -222,6 +227,7 @@ class HomeRepositoryImpl : HomeRepository {
 
     /**
      * FIRESTORE: Check friendship status between two users
+     * Uses compound queries for better performance
      */
     override suspend fun checkFriendshipStatus(
         currentUserId: String,
@@ -241,11 +247,12 @@ class HomeRepositoryImpl : HomeRepository {
                 return Result.success(RequestStatus.ACCEPTED)
             }
 
-            // Check for pending request (sent or received)
+            // Check for pending request (sent by current user)
             val sentRequest = firestore.collection("friendRequests")
                 .whereEqualTo("fromUserId", currentUserId)
                 .whereEqualTo("toUserId", otherUserId)
                 .whereEqualTo("status", "PENDING")
+                .limit(1)
                 .get()
                 .await()
 
@@ -253,10 +260,12 @@ class HomeRepositoryImpl : HomeRepository {
                 return Result.success(RequestStatus.PENDING)
             }
 
+            // Check for pending request (sent by other user)
             val receivedRequest = firestore.collection("friendRequests")
                 .whereEqualTo("fromUserId", otherUserId)
                 .whereEqualTo("toUserId", currentUserId)
                 .whereEqualTo("status", "PENDING")
+                .limit(1)
                 .get()
                 .await()
 

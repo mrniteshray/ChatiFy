@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.navigation.fragment.findNavController
@@ -39,6 +40,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
         currentUserId = FirebaseAuth.getInstance().currentUser?.uid
         
+        setupBackPressHandler()
         setupToolbar()
         setupSearchListeners()
         setupConnectedFriendsList()
@@ -47,6 +49,16 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         // Load connected friends on start
         currentUserId?.let { viewModel.loadConnectedFriends(it) }
         currentUserId?.let { viewModel.loadFriendRequests(it) }
+    }
+
+    private fun setupBackPressHandler() {
+        // Handle back press to exit app instead of going to login
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                // Exit the app
+                requireActivity().finish()
+            }
+        })
     }
 
     private fun setupToolbar() {
@@ -267,7 +279,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private fun observeConnectedFriends() {
         viewModel.connectedFriendsState.observe(viewLifecycleOwner) { state ->
             when (state) {
+                is ConnectedFriendsState.Loading -> {
+                    binding.tvFriendsTitle.visibility = View.VISIBLE
+                    binding.layoutFriendsLoading.visibility = View.VISIBLE
+                    binding.rvConnectedFriends.visibility = View.GONE
+                }
                 is ConnectedFriendsState.Success -> {
+                    binding.layoutFriendsLoading.visibility = View.GONE
+                    
                     if (state.friends.isEmpty()) {
                         binding.tvFriendsTitle.visibility = View.GONE
                         binding.rvConnectedFriends.visibility = View.GONE
@@ -278,6 +297,9 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                 }
                 is ConnectedFriendsState.Error -> {
+                    binding.layoutFriendsLoading.visibility = View.GONE
+                    binding.tvFriendsTitle.visibility = View.GONE
+                    binding.rvConnectedFriends.visibility = View.GONE
                     Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
                 }
             }

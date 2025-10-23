@@ -113,6 +113,7 @@ class HomeViewModel(
     fun loadConnectedFriends(userId: String) {
         viewModelScope.launch {
             try {
+                _connectedFriendsState.value = ConnectedFriendsState.Loading
                 val result = repository.getConnectedFriends(userId)
                 _connectedFriendsState.value = if (result.isSuccess) {
                     ConnectedFriendsState.Success(result.getOrNull() ?: emptyList())
@@ -165,6 +166,7 @@ sealed class FriendRequestsState {
 }
 
 sealed class ConnectedFriendsState {
+    object Loading : ConnectedFriendsState()
     data class Success(val friends: List<User>) : ConnectedFriendsState()
     data class Error(val message: String) : ConnectedFriendsState()
 }

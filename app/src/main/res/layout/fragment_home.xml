@@ -171,6 +171,34 @@
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/cardResult" />
 
+        <!-- Loading indicator for friends -->
+        <LinearLayout
+            android:id="@+id/layoutFriendsLoading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="24dp"
+            android:visibility="gone"
+            app:layout_constraintTop_toBottomOf="@id/tvFriendsTitle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent">
+
+            <ProgressBar
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:indeterminateTint="@color/sky_blue_primary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="Loading friends..."
+                android:textSize="14sp"
+                android:textColor="@color/text_hint" />
+
+        </LinearLayout>
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvConnectedFriends"
             android:layout_width="match_parent"
@@ -178,7 +206,7 @@
             android:clipToPadding="false"
             android:paddingVertical="8dp"
             android:visibility="gone"
-            app:layout_constraintTop_toBottomOf="@id/tvFriendsTitle"
+            app:layout_constraintTop_toBottomOf="@id/layoutFriendsLoading"
             app:layout_constraintBottom_toBottomOf="parent"
             tools:listitem="@layout/item_connected_friend" />
 
