@@ -113,7 +113,7 @@ git clone https://github.com/mrniteshray/ChatiFy.git
 2️⃣ **Add Firebase Configuration**
 - Place your `google-services.json` in the `app/` directory
 
-3️⃣ **Sync & Build**
+4️⃣ **Sync & Build**
 - Open project in Android Studio
 - Sync Gradle files
 - Run the app 🎉

@@ -210,6 +210,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     
                     if (requestCount == 0) {
                         dialogBinding.tvNoRequests.visibility = View.VISIBLE
+                        dialogBinding.tvNoRequests.text = "No friend requests"
                         dialogBinding.rvFriendRequests.visibility = View.GONE
                     } else {
                         dialogBinding.tvNoRequests.visibility = View.GONE
@@ -218,7 +219,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                     }
                 }
                 is FriendRequestsState.Error -> {
-                    Toast.makeText(context, state.message, Toast.LENGTH_SHORT).show()
+                    dialogBinding.tvNoRequests.visibility = View.VISIBLE
+                    dialogBinding.tvNoRequests.text = "Error loading requests"
+                    dialogBinding.rvFriendRequests.visibility = View.GONE
+                    
+                    Toast.makeText(
+                        context, 
+                        "Error: ${state.message}", 
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
         }
@@ -240,8 +249,19 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     
     private fun observeFriendRequests() {
         viewModel.friendRequestsState.observe(viewLifecycleOwner) { state ->
-            if (state is FriendRequestsState.Success) {
-                updateNotificationBadge(state.requests.size)
+            when (state) {
+                is FriendRequestsState.Success -> {
+                    updateNotificationBadge(state.requests.size)
+                }
+                is FriendRequestsState.Error -> {
+                    // Show error but don't hide the badge - set to 0
+                    updateNotificationBadge(0)
+                    Toast.makeText(
+                        context, 
+                        "Failed to load friend requests: ${state.message}", 
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         }
     }

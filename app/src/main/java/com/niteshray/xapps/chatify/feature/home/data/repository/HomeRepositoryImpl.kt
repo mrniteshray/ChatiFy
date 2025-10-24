@@ -119,35 +119,47 @@ class HomeRepositoryImpl : HomeRepository {
 
     /**
      * REALTIME DB: Get friend requests for a user
+     * Fetches all requests and filters client-side to avoid Firebase index requirement
      */
     override suspend fun getFriendRequests(userId: String): Result<List<FriendRequest>> {
         return try {
+            println("DEBUG: Fetching friend requests for userId: $userId")
+            
+            // Fetch all friend requests (no orderByChild to avoid index requirement)
             val snapshot = realtimeDb.child("friendRequests")
-                .orderByChild("toUserId")
-                .equalTo(userId)
                 .get()
                 .await()
 
+            println("DEBUG: Snapshot exists: ${snapshot.exists()}, Total children: ${snapshot.childrenCount}")
+
             val requests = mutableListOf<FriendRequest>()
+            
+            // Filter on client side for the current user
             snapshot.children.forEach { data ->
+                val toUserId = data.child("toUserId").getValue(String::class.java)
                 val status = data.child("status").getValue(String::class.java)
-                if (status == "PENDING") {
-                    requests.add(
-                        FriendRequest(
-                            id = data.key ?: "",
-                            fromUserId = data.child("fromUserId").getValue(String::class.java) ?: "",
-                            fromUsername = data.child("fromUsername").getValue(String::class.java) ?: "",
-                            fromUserName = data.child("fromUserName").getValue(String::class.java) ?: "",
-                            toUserId = data.child("toUserId").getValue(String::class.java) ?: "",
-                            status = RequestStatus.PENDING,
-                            timestamp = data.child("timestamp").getValue(Long::class.java) ?: 0L
-                        )
+                
+                // Only include pending requests for this user
+                if (toUserId == userId && status == "PENDING") {
+                    val request = FriendRequest(
+                        id = data.key ?: "",
+                        fromUserId = data.child("fromUserId").getValue(String::class.java) ?: "",
+                        fromUsername = data.child("fromUsername").getValue(String::class.java) ?: "",
+                        fromUserName = data.child("fromUserName").getValue(String::class.java) ?: "",
+                        toUserId = toUserId,
+                        status = RequestStatus.PENDING,
+                        timestamp = data.child("timestamp").getValue(Long::class.java) ?: 0L
                     )
+                    requests.add(request)
+                    println("DEBUG: Added request from: ${request.fromUserName}")
                 }
             }
 
+            println("DEBUG: Total pending requests found for user: ${requests.size}")
             Result.success(requests)
         } catch (e: Exception) {
+            println("DEBUG: Error fetching friend requests: ${e.message}")
+            e.printStackTrace()
             Result.failure(e)
         }
     }
